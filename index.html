@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+<div id="root"></div>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script src="https://fb.me/react-15.1.0.js"></script>
+<script src="https://fb.me/react-dom-15.1.0.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.6.0/redux.js"></script>
+<script type="text/babel" data-presets="es2015,stage-2,react">
+/**
+ * Get method from redux
+ */
+const { createStore } = Redux;
+
+/**
+ * counter reducer,
+ * default param is initial state
+ */
+const counter = (state = 0, action) => {
+  switch (action.type) {
+    case 'INCREMENT': return state + 1;
+    case 'DECREMENT': return state - 1;
+    default:          return state;
+  }
+}
+
+
+/**
+ * Basic counter component
+ */
+const Counter = ({
+  value,
+  onIncrement,
+  onDecrement
+}) => (
+  <div>
+    <h1>{ value }</h1>
+    <button onClick={onIncrement}>Inc</button>
+    <button onClick={onDecrement}>Dec</button>
+  </div>
+);
+
+
+
+/**
+ * render function, renders state to body
+ */
+const render = () => {
+  ReactDOM.render(
+    <Counter
+      value={store.getState()}
+      onIncrement={() => store.dispatch({ type: 'INCREMENT' })}
+      onDecrement={() => store.dispatch({ type: 'DECREMENT' })}
+    />,
+    document.getElementById('root')
+  );
+}
+
+
+// create store using counter
+const store = createStore(counter);
+
+// call "render" on state changes
+store.subscribe(render);
+render();
+
+
+</script>
+  </body>
+</html>
