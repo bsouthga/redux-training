@@ -1,71 +1,200 @@
 <html>
-  <head>
-    <meta charset="utf-8" />
-  </head>
+  <head><meta charset="utf-8" /></head>
   <body>
 <div id="root"></div>
+
 <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 <script src="https://fb.me/react-15.1.0.js"></script>
 <script src="https://fb.me/react-dom-15.1.0.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.6.0/redux.js"></script>
+
 <script type="text/babel" data-presets="es2015,stage-2,react">
-/**
- * Get method from redux
- */
+
+
 const { createStore } = Redux;
 
+
 /**
- * counter reducer,
- * default param is initial state
+ *
+ * Reducers
+ *
  */
-const counter = (state = 0, action) => {
+
+const todo = (state, action) => {
   switch (action.type) {
-    case 'INCREMENT': return state + 1;
-    case 'DECREMENT': return state - 1;
-    default:          return state;
+    case 'ADD_TODO': {
+      return {
+        id: action.id,
+        text: action.text,
+        completed: false
+      }
+    }
+
+    case 'TOGGLE_TODO': {
+      if (state.id !== action.id) return state;
+      return {
+        ...state,
+        completed: !state.completed
+      };
+    }
+
+    default: return state;
+  }
+}
+
+const todos = (state = [], action) => {
+  switch (action.type) {
+
+    case 'ADD_TODO': {
+      return [
+        ...state,
+        todo(undefined, action)
+      ]
+    }
+
+    case 'REMOVE_TODO': {
+      return state.filter(t => t.id !== action.id);
+    }
+
+    case 'TOGGLE_TODO': {
+      return state.map(t => todo(t, action));
+    }
+
+    default: return state;
+  }
+};
+
+const visibilityFilter = (state, action) => {
+  switch (action.type) {
+    case 'SET_VISIBILITY_FILTER': {
+      return action.filter;
+    }
+
+    default: return state;
+  }
+}
+
+const app = (state = {}, action) => {
+  return {
+    todos: todos(state.todos, action),
+    visibilityFilter: visibilityFilter(state.visibilityFilter, action)
+  };
+}
+
+
+/**
+ *
+ * Store
+ *
+ */
+const store = createStore(app);
+
+
+/**
+ *
+ * Components
+ *
+ */
+
+const Todo = ({
+  todo: t
+}) => {
+  return (
+    <li key={t.id}
+        onClick={() => {
+          store.dispatch({
+            type: 'TOGGLE_TODO',
+            id: t.id
+          })
+        }}
+        style={{
+          textDecoration: t.completed ? 'line-through' : 'none'
+        }}>
+      { t.text }
+    </li>
+  )
+}
+
+
+const FilterLink = ({
+  filter,
+  children
+}) => {
+  return (
+    <a href="#"
+       style={{
+         marginRight: '10px'
+       }}
+       onClick={e => {
+         e.preventDefault();
+         store.dispatch({
+           type: 'SET_VISIBILITY_FILTER',
+           filter
+         })
+       }} >
+      { children }
+    </a>
+  )
+}
+
+class App extends React.Component {
+
+  // number to increment for unique ids
+  static GLOBAL_ID = 1;
+
+  render() {
+    const visible = getVisibleTodos(this.props.todos, this.props.filter);
+
+    return (
+      <div>
+        <input ref={node => { this.input = node; }}/>
+        <button
+          onClick={() => {
+            store.dispatch({
+              type: 'ADD_TODO',
+              text: this.input.value,
+              id: App.GLOBAL_ID++
+            })
+          }} >
+          Add todo
+        </button>
+        <ul>
+          {visible.map(t => <Todo todo={t} />)}
+        </ul>
+        <p>
+          <FilterLink filter="SHOW_ALL">All</FilterLink>
+          <FilterLink filter="SHOW_ACTIVE">Active</FilterLink>
+          <FilterLink filter="SHOW_COMPLETED">Completed</FilterLink>
+        </p>
+      </div>
+    )
   }
 }
 
 
-/**
- * Basic counter component
- */
-const Counter = ({
-  value,
-  onIncrement,
-  onDecrement
-}) => (
-  <div>
-    <h1>{ value }</h1>
-    <button onClick={onIncrement}>Inc</button>
-    <button onClick={onDecrement}>Dec</button>
-  </div>
-);
-
-
 
 /**
- * render function, renders state to body
+ * helper functions + main logic
  */
+function getVisibleTodos(todos, filter) {
+  switch (filter) {
+    case 'SHOW_ACTIVE':    return todos.filter(t => !t.completed);
+    case 'SHOW_COMPLETED': return todos.filter(t => t.completed);
+    default:               return todos;
+  }
+}
+
+
 const render = () => {
+  const state = store.getState();
   ReactDOM.render(
-    <Counter
-      value={store.getState()}
-      onIncrement={() => store.dispatch({ type: 'INCREMENT' })}
-      onDecrement={() => store.dispatch({ type: 'DECREMENT' })}
-    />,
+    <App todos={state.todos} filter={state.visibilityFilter} />,
     document.getElementById('root')
   );
 }
 
-
-// create store using counter
-const store = createStore(counter);
-
-// call "render" on state changes
 store.subscribe(render);
 render();
-
 
 </script>
   </body>
