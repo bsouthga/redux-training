@@ -100,8 +100,7 @@ const Todo = ({
   todo: t
 }) => {
   return (
-    <li key={t.id}
-        onClick={() => {
+    <li onClick={() => {
           store.dispatch({
             type: 'TOGGLE_TODO',
             id: t.id
@@ -159,7 +158,7 @@ class App extends React.Component {
           Add todo
         </button>
         <ul>
-          {visible.map(t => <Todo todo={t} />)}
+          {visible.map(t => <Todo key={t.id} todo={t} />)}
         </ul>
         <p>
           <FilterLink filter="SHOW_ALL">All</FilterLink>
